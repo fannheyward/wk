@@ -2,11 +2,7 @@
 // used both as the worktree directory name and the initial branch name.
 package naming
 
-import (
-	"math/rand/v2"
-	"os"
-	"path/filepath"
-)
+import "math/rand/v2"
 
 var adjectives = []string{
 	"brave", "quiet", "swift", "calm", "bright", "bold", "clever", "eager",
@@ -29,13 +25,14 @@ func New() string {
 	return adjectives[rand.IntN(len(adjectives))] + "-" + nouns[rand.IntN(len(nouns))]
 }
 
-// Unique returns a random name whose directory does not yet exist under dir.
-// It retries up to 20 times before giving up and returning the last candidate.
-func Unique(dir string) string {
+// Unique returns a random name for which taken(name) reports false, retrying
+// up to 20 times before giving up and returning the last candidate. The caller
+// decides what "taken" means (e.g. an existing directory or git branch).
+func Unique(taken func(name string) bool) string {
 	var name string
-	for i := 0; i < 20; i++ {
+	for range 20 {
 		name = New()
-		if _, err := os.Stat(filepath.Join(dir, name)); os.IsNotExist(err) {
+		if !taken(name) {
 			return name
 		}
 	}

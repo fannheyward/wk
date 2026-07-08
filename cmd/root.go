@@ -27,7 +27,8 @@ type CLI struct {
 // Execute parses args and runs the selected command.
 func Execute() {
 	var cli CLI
-	ctx := kong.Parse(&cli,
+	ctx := kong.Parse(
+		&cli,
 		kong.Name("wk"),
 		kong.Description("Manage git worktrees in a centralized directory.\n\n"+
 			"Worktrees are stored under <root>/<repo>/<name>. The root defaults to\n"+

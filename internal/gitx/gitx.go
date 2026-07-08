@@ -158,7 +158,7 @@ func Worktrees() ([]Worktree, error) {
 func parseWorktrees(out string) []Worktree {
 	var list []Worktree
 	var cur *Worktree
-	for _, line := range strings.Split(out, "\n") {
+	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "worktree "):
 			list = append(list, Worktree{Path: strings.TrimPrefix(line, "worktree "), IsMain: len(list) == 0})

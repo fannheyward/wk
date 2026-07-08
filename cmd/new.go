@@ -42,7 +42,14 @@ func (c *NewCmd) Run() error {
 		return err
 	}
 
-	name := naming.Unique(dir)
+	// A name is taken if its directory exists or a branch of that name already
+	// exists (wk rm keeps branches, so a freed directory may still have one).
+	name := naming.Unique(func(n string) bool {
+		if _, err := os.Stat(filepath.Join(dir, n)); err == nil {
+			return true
+		}
+		return gitx.RefExists("refs/heads/" + n)
+	})
 	path := filepath.Join(dir, name)
 
 	if err := gitx.WorktreeAdd(path, name, startPoint); err != nil {

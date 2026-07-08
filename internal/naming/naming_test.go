@@ -1,8 +1,6 @@
 package naming
 
 import (
-	"os"
-	"path/filepath"
 	"regexp"
 	"testing"
 )
@@ -10,7 +8,7 @@ import (
 var nameRe = regexp.MustCompile(`^[a-z]+-[a-z]+$`)
 
 func TestNewFormat(t *testing.T) {
-	for i := 0; i < 100; i++ {
+	for range 100 {
 		n := New()
 		if !nameRe.MatchString(n) {
 			t.Fatalf("New() = %q, want adjective-noun lowercase", n)
@@ -18,15 +16,12 @@ func TestNewFormat(t *testing.T) {
 	}
 }
 
-func TestUniqueAvoidsExisting(t *testing.T) {
-	dir := t.TempDir()
-	// Occupy a name; Unique must never return it.
+func TestUniqueAvoidsTaken(t *testing.T) {
+	// Occupy one name; Unique must never return it.
 	taken := New()
-	if err := os.Mkdir(filepath.Join(dir, taken), 0o755); err != nil {
-		t.Fatal(err)
-	}
-	for i := 0; i < 50; i++ {
-		if got := Unique(dir); got == taken {
+	for range 50 {
+		got := Unique(func(n string) bool { return n == taken })
+		if got == taken {
 			t.Fatalf("Unique returned the taken name %q", taken)
 		}
 	}
