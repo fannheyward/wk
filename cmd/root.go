@@ -18,7 +18,7 @@ import (
 // default branch, and lets you rename their branch afterwards.
 type CLI struct {
 	New    NewCmd    `cmd:"" help:"Create a worktree from the latest default branch"`
-	Ls     LsCmd     `cmd:"" help:"List worktrees of the current repo (or all repos with --all)"`
+	Ls     LsCmd     `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
 	Path   PathCmd   `cmd:"" help:"Print the absolute path of a worktree"`
 	Rename RenameCmd `cmd:"" help:"Rename a worktree's branch (directory stays unchanged)"`
 	Rm     RmCmd     `cmd:"" help:"Remove a worktree directory (its branch is kept)"`
