@@ -76,6 +76,14 @@ func RefExists(ref string) bool {
 	return err == nil
 }
 
+// CheckBranchName returns an error if name is not a valid git branch name.
+func CheckBranchName(name string) error {
+	if _, err := Run("check-ref-format", "--branch", name); err != nil {
+		return fmt.Errorf("invalid branch name %q: %w", name, err)
+	}
+	return nil
+}
+
 // StartPoint returns the ref `wk new` should branch from for the given default
 // branch: origin/<branch> when available (freshest, especially after a
 // successful fetch), otherwise the local <branch> (offline fallback).
@@ -129,6 +137,69 @@ func BranchAt(path string) string {
 		return "(detached)"
 	}
 	return b
+}
+
+// IsWorktreeRootAt reports whether path is a git worktree root.
+func IsWorktreeRootAt(path string) bool {
+	top, err := run(path, "rev-parse", "--show-toplevel")
+	return err == nil && samePath(top, path)
+}
+
+func samePath(a, b string) bool {
+	aa, err := filepath.Abs(a)
+	if err == nil {
+		a = aa
+	}
+	bb, err := filepath.Abs(b)
+	if err == nil {
+		b = bb
+	}
+	if aa, err := filepath.EvalSymlinks(a); err == nil {
+		a = aa
+	}
+	if bb, err := filepath.EvalSymlinks(b); err == nil {
+		b = bb
+	}
+	return filepath.Clean(a) == filepath.Clean(b)
+}
+
+// Status describes lightweight worktree status for list output.
+type Status struct {
+	Dirty    string
+	Upstream string
+	Ahead    string
+	Behind   string
+}
+
+// StatusAt returns dirty and upstream state for the worktree at path.
+func StatusAt(path string) Status {
+	st := Status{Dirty: "?", Upstream: "-", Ahead: "-", Behind: "-"}
+	if out, err := run(path, "status", "--porcelain"); err == nil {
+		if out == "" {
+			st.Dirty = "clean"
+		} else {
+			st.Dirty = "dirty"
+		}
+	}
+	upstream, err := run(path, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+	if err != nil || upstream == "" {
+		return st
+	}
+	st.Upstream = upstream
+	if out, err := run(path, "rev-list", "--left-right", "--count", "HEAD...@{u}"); err == nil {
+		st.Ahead, st.Behind = parseAheadBehind(out)
+	} else {
+		st.Ahead, st.Behind = "?", "?"
+	}
+	return st
+}
+
+func parseAheadBehind(out string) (ahead, behind string) {
+	fields := strings.Fields(out)
+	if len(fields) != 2 {
+		return "?", "?"
+	}
+	return fields[0], fields[1]
 }
 
 // Worktree describes one entry from `git worktree list`.

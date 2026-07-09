@@ -1,6 +1,11 @@
 package gitx
 
-import "testing"
+import (
+	"os"
+	"os/exec"
+	"path/filepath"
+	"testing"
+)
 
 func TestParseWorktrees(t *testing.T) {
 	out := `worktree /repo/main
@@ -46,5 +51,42 @@ detached
 func TestParseWorktreesEmpty(t *testing.T) {
 	if got := parseWorktrees(""); len(got) != 0 {
 		t.Errorf("empty input should yield no worktrees, got %d", len(got))
+	}
+}
+
+func TestParseAheadBehind(t *testing.T) {
+	cases := []struct {
+		out           string
+		ahead, behind string
+	}{
+		{"0\t0", "0", "0"},
+		{"3 12", "3", "12"},
+		{"bad", "?", "?"},
+	}
+	for _, c := range cases {
+		ahead, behind := parseAheadBehind(c.out)
+		if ahead != c.ahead || behind != c.behind {
+			t.Errorf("parseAheadBehind(%q) = %q, %q; want %q, %q", c.out, ahead, behind, c.ahead, c.behind)
+		}
+	}
+}
+
+func TestIsWorktreeRootAtRejectsNestedDirectory(t *testing.T) {
+	repo := filepath.Join(t.TempDir(), "repo")
+	if err := os.Mkdir(repo, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := exec.Command("git", "init", "-b", "main", repo).Run(); err != nil {
+		t.Fatal(err)
+	}
+	nested := filepath.Join(repo, "nested")
+	if err := os.Mkdir(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if !IsWorktreeRootAt(repo) {
+		t.Fatalf("repo root should be a worktree root")
+	}
+	if IsWorktreeRootAt(nested) {
+		t.Fatalf("nested directory should not be a worktree root")
 	}
 }

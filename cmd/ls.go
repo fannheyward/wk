@@ -13,22 +13,23 @@ import (
 
 // LsCmd lists worktrees of the current repo, or all repos with --all.
 type LsCmd struct {
-	All bool `short:"a" help:"List worktrees across all repos."`
+	All     bool `short:"a" help:"List worktrees across all repos."`
+	Verbose bool `short:"v" help:"Include dirty and upstream status."`
 }
 
 func (c *LsCmd) Run() error {
 	if c.All {
-		return lsAllRepos()
+		return lsAllRepos(c.Verbose)
 	}
-	return lsCurrentRepo()
+	return lsCurrentRepo(c.Verbose)
 }
 
 // row is one line of ls output.
 type row struct {
-	repo, name, branch, path string
+	repo, name, branch, dirty, upstream, ahead, behind, path string
 }
 
-func lsCurrentRepo() error {
+func lsCurrentRepo(verbose bool) error {
 	dir, repo, err := repoDir()
 	if err != nil {
 		return err
@@ -42,14 +43,14 @@ func lsCurrentRepo() error {
 		// Only wk-managed worktrees live under <root>/<repo>/; this also
 		// filters out the source repo's main worktree.
 		if filepath.Dir(wt.Path) == dir {
-			rows = append(rows, row{repo, filepath.Base(wt.Path), wt.Branch, wt.Path})
+			rows = append(rows, makeRow(repo, filepath.Base(wt.Path), wt.Branch, wt.Path, verbose))
 		}
 	}
-	printRows(rows, false)
+	printRows(rows, false, verbose)
 	return nil
 }
 
-func lsAllRepos() error {
+func lsAllRepos(verbose bool) error {
 	root, err := config.Root()
 	if err != nil {
 		return err
@@ -76,26 +77,45 @@ func lsAllRepos() error {
 				continue
 			}
 			path := filepath.Join(repoPath, w.Name())
-			rows = append(rows, row{r.Name(), w.Name(), gitx.BranchAt(path), path})
+			rows = append(rows, makeRow(r.Name(), w.Name(), gitx.BranchAt(path), path, verbose))
 		}
 	}
-	printRows(rows, true)
+	printRows(rows, true, verbose)
 	return nil
 }
 
-func printRows(rows []row, withRepo bool) {
+func makeRow(repo, name, branch, path string, verbose bool) row {
+	r := row{repo: repo, name: name, branch: branch, path: path}
+	if verbose {
+		st := gitx.StatusAt(path)
+		r.dirty = st.Dirty
+		r.upstream = st.Upstream
+		r.ahead = st.Ahead
+		r.behind = st.Behind
+	}
+	return r
+}
+
+func printRows(rows []row, withRepo, verbose bool) {
 	if len(rows) == 0 {
 		fmt.Fprintln(os.Stderr, "no worktrees")
 		return
 	}
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 	header := "NAME\tBRANCH\tPATH"
+	if verbose {
+		header = "NAME\tBRANCH\tDIRTY\tUPSTREAM\tAHEAD\tBEHIND\tPATH"
+	}
 	if withRepo {
 		header = "REPO\t" + header
 	}
 	fmt.Fprintln(w, header)
 	for _, r := range rows {
-		line := strings.Join([]string{r.name, r.branch, r.path}, "\t")
+		cols := []string{r.name, r.branch, r.path}
+		if verbose {
+			cols = []string{r.name, r.branch, r.dirty, r.upstream, r.ahead, r.behind, r.path}
+		}
+		line := strings.Join(cols, "\t")
 		if withRepo {
 			line = r.repo + "\t" + line
 		}

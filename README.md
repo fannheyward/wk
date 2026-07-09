@@ -35,10 +35,16 @@ Run inside any git repository.
 # Create a worktree from the latest origin/<default-branch>
 wk new
 #   fetches origin, then creates <root>/<repo>/<random-name>
+wk new --name feature-one
+#   creates <root>/<repo>/feature-one on branch feature-one
 
 # List this repo's worktrees (directory name, branch, path)
 wk ls
+wk ls --verbose     # include dirty/upstream/ahead/behind status
 wk ls --all          # across all repos under the root
+
+# Check the global root for invalid or inconsistent worktree directories
+wk doctor
 
 # Print a worktree's absolute path (handy for cd)
 cd "$(wk path brave-otter)"
@@ -57,5 +63,8 @@ architecture decisions and `docs/GLOSSARY.md` for terminology.
 - `wk new` must run inside a git repo. It tries to `git fetch` for the freshest
   start point, but works offline too: on fetch failure it warns and falls back
   to the local default branch.
+- `wk new --name <name>` lets you choose the directory and branch name at
+  creation time. Names are single path segments and must also be valid git
+  branch names.
 - `wk rm` keeps the branch so work can be recovered; it relies on git's dirty
   check and refuses to delete uncommitted changes without `--force`.

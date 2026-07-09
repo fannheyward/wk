@@ -10,7 +10,9 @@
 | **root（全局根目录）** | 所有 worktree 集中存放的根目录。默认 `~/worktrees`，可用环境变量 `WK_ROOT` 覆盖。 |
 | **repo 分组目录** | root 下按源 repo 名分出的子目录：`<root>/<repo名>/`。同一 repo 的所有 worktree 聚在这里。 |
 | **随机名 (random name)** | 创建 worktree 时生成的"形容词-名词"风格名字（如 `brave-otter`）。**同时作为目录名和初始 branch 名**。 |
+| **显式名 (explicit name)** | 用户通过 `wk new --name <name>` 指定的创建名。与随机名一样，**同时作为目录名和初始 branch 名**，且必须是单路径段和合法 git branch 名。 |
 | **目录名 (dir name)** | worktree 所在目录的名字，等于创建时的随机名。**创建后永不改变**，是定位 worktree 的稳定标识 (stable key)。 |
 | **branch 名** | worktree 当前 checkout 的分支名。等于创建时的随机名，与目录名始终一致（工具不提供 rename）。 |
 | **默认分支 (default branch)** | 源 repo 的主分支，自动检测（`main`/`master`，通过远端 HEAD 判断）。新 worktree 的起点。 |
 | **stable key** | 用户在 `path`/`rm` 中引用 worktree 的标识，统一用**目录名**（稳定不变，且与 branch 名恒等）。 |
+| **doctor** | 非破坏性诊断命令，检查 root 下 wk 管理目录是否为 git worktree、branch 是否可读、目录名和 branch 名是否一致。 |
