@@ -24,10 +24,8 @@ Worktrees live under a global root, grouped by repo:
 - **root** defaults to `~/worktrees`; override with the `WK_ROOT` environment
   variable.
 - The **directory name** is a random `adjective-noun` (e.g. `brave-otter`) and
-  never changes — so open shells and editors don't break.
-- The **branch name** starts equal to the directory name; rename it later with
-  `wk rename`. After that the directory and branch names may differ, which is
-  fine. Commands always refer to a worktree by its **directory name**.
+  the new **branch** uses the same name, so the directory and branch always
+  match. Commands refer to a worktree by its **directory name**.
 
 ## Usage
 
@@ -44,9 +42,6 @@ wk ls --all          # across all repos under the root
 
 # Print a worktree's absolute path (handy for cd)
 cd "$(wk path brave-otter)"
-
-# Rename the branch only; the directory stays put
-wk rename brave-otter fix-login
 
 # Remove a worktree directory (its branch is kept)
 wk rm brave-otter

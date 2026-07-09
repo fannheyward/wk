@@ -17,11 +17,10 @@ import (
 // root directory, creates them with readable random names from the latest
 // default branch, and lets you rename their branch afterwards.
 type CLI struct {
-	New    NewCmd    `cmd:"" help:"Create a worktree from the latest default branch"`
-	Ls     LsCmd     `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
-	Path   PathCmd   `cmd:"" help:"Print the absolute path of a worktree"`
-	Rename RenameCmd `cmd:"" help:"Rename a worktree's branch (directory stays unchanged)"`
-	Rm     RmCmd     `cmd:"" help:"Remove a worktree directory (its branch is kept)"`
+	New  NewCmd  `cmd:"" help:"Create a worktree from the latest default branch"`
+	Ls   LsCmd   `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
+	Path PathCmd `cmd:"" help:"Print the absolute path of a worktree"`
+	Rm   RmCmd   `cmd:"" help:"Remove a worktree directory (its branch is kept)"`
 }
 
 // Execute parses args and runs the selected command.

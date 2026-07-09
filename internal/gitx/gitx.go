@@ -102,12 +102,6 @@ func WorktreeAdd(path, branch, startPoint string) error {
 	return err
 }
 
-// BranchMove renames a branch (git branch -m).
-func BranchMove(oldName, newName string) error {
-	_, err := Run("branch", "-m", oldName, newName)
-	return err
-}
-
 // WorktreeRemove removes a worktree. force allows removing a dirty worktree.
 func WorktreeRemove(path string, force bool) error {
 	args := []string{"worktree", "remove", path}
