@@ -1,9 +1,9 @@
 # wk — worktree kit
 
-A tiny CLI that collects your git worktrees into one central directory, creates
-them with readable random names from the latest default branch, and lets you
-rename their branch afterwards. Inspired by the worktree flow in the GitHub
-Copilot app.
+A tiny CLI that collects your git worktrees into one central directory and
+creates them from the latest default branch with readable random names. The
+directory name and branch name match, so commands can refer to a worktree by
+that name. Inspired by the worktree flow in the GitHub Copilot app.
 
 ## Install
 

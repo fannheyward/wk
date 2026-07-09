@@ -73,33 +73,33 @@ flowchart TD
 
 ## Implementation Steps
 
-### Phase 1 — 项目骨架 ⏳
+### Phase 1 — 项目骨架 ✅
 - [x] `go mod init`，引入 kong
-- [ ] 根命令 + 版本 + 帮助
-- [ ] `internal/` 包结构：`gitx`（git shell out 封装）、`config`（root 解析）、`naming`（随机名）
-- [ ] repo 探测：cwd 向上找 `.git`，解析 repo 名（取 toplevel 目录名）
-- [ ] root 解析：`WK_ROOT` → 默认 `~/worktrees`
+- [x] 根命令 + 帮助
+- [x] `internal/` 包结构：`gitx`（git shell out 封装）、`config`（root 解析）、`naming`（随机名）
+- [x] repo 探测：通过 git 解析源 repo 名
+- [x] root 解析：`WK_ROOT` → 默认 `~/worktrees`
 
-### Phase 2 — 创建 (`wk new`) ⏳
-- [ ] 默认分支检测（`git symbolic-ref refs/remotes/origin/HEAD` 兜底 main/master）
-- [ ] 自动 `git fetch`
-- [ ] 随机名生成（形容词/名词词表，冲突则重试）
-- [ ] `git worktree add <root>/<repo>/<name> -b <name> origin/<default>`
-- [ ] 打印创建结果（路径 + branch）
+### Phase 2 — 创建 (`wk new`) ✅
+- [x] 默认分支检测（`git symbolic-ref refs/remotes/origin/HEAD` 兜底 main/master）
+- [x] 自动 `git fetch`
+- [x] 随机名生成（形容词/名词词表，冲突则重试）
+- [x] `git worktree add <root>/<repo>/<name> -b <name> <start-point>`
+- [x] 打印创建结果（路径 + branch）
 
-### Phase 3 — 查询 (`wk ls` / `wk path`) ⏳
-- [ ] 解析 `git worktree list --porcelain`，过滤属于当前 repo 的
-- [ ] `ls`：表格输出目录名 / branch 名 / 路径；`--all` 跨 repo
-- [ ] `path <目录名>`：解析并输出绝对路径，找不到报错
+### Phase 3 — 查询 (`wk ls` / `wk path`) ✅
+- [x] 解析 `git worktree list --porcelain`，过滤属于当前 repo 的
+- [x] `ls`：表格输出目录名 / branch 名 / 路径；`--all` 跨 repo
+- [x] `path <目录名>`：解析并输出绝对路径，找不到报错
 
-### Phase 4 — 删除 (`wk rm`) ⏳
-- [ ] `rm`：`git worktree remove <path>`（脏则提示 `--force`）→ `git worktree prune`
+### Phase 4 — 删除 (`wk rm`) ✅
+- [x] `rm`：`git worktree remove <path>`（脏则提示 `--force`）→ `git worktree prune`
 
-### Phase 5 — 打磨与分发 ⏳
-- [ ] 错误信息友好化（不在 repo 内、离线 fetch 失败、名字找不到）
-- [ ] README（安装、用法、`cd $(wk path)` 提示）
-- [ ] 基础测试（naming 冲突重试、repo/root 解析、porcelain 解析）
-- [ ] 交叉编译产物 / GitHub Release（可选 goreleaser）
+### Phase 5 — 打磨与分发 ✅（发布自动化可选）
+- [x] 错误信息友好化（不在 repo 内、离线 fetch 失败、名字找不到）
+- [x] README（安装、用法、`cd $(wk path)` 提示）
+- [x] 基础测试（naming 冲突重试、repo/root 解析、porcelain 解析）
+- [ ] 可选：交叉编译产物 / GitHub Release（需要时再加 goreleaser）
 
 ## Risk Assessment
 

@@ -14,8 +14,8 @@ import (
 // CLI defines the wk command surface.
 //
 // wk (worktree kit) collects git worktrees from all your repos into one global
-// root directory, creates them with readable random names from the latest
-// default branch, and lets you rename their branch afterwards.
+// root directory and creates them from the latest default branch with readable
+// random names. The directory name and initial branch name match.
 type CLI struct {
 	New  NewCmd  `cmd:"" help:"Create a worktree from the latest default branch"`
 	Ls   LsCmd   `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
