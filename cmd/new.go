@@ -70,6 +70,16 @@ func chooseWorktreeName(dir, explicit string) (string, error) {
 		if _, err := os.Stat(filepath.Join(dir, n)); err == nil {
 			return true
 		}
+		if codexWorktreeIDRe.MatchString(n) {
+			codexPath := resolve(filepath.Join(filepath.Dir(dir), n, filepath.Base(dir)))
+			if wts, err := gitx.Worktrees(); err == nil {
+				for _, wt := range wts {
+					if resolve(wt.Path) == codexPath {
+						return true
+					}
+				}
+			}
+		}
 		return gitx.RefExists("refs/heads/" + n)
 	}
 	if explicit == "" {

@@ -79,6 +79,13 @@ func TestIsWorktreeRootAtRejectsNestedDirectory(t *testing.T) {
 	if err := exec.Command("git", "init", "-b", "main", repo).Run(); err != nil {
 		t.Fatal(err)
 	}
+	name, err := RepoNameAt(repo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if name != "repo" {
+		t.Fatalf("RepoNameAt() = %q, want repo", name)
+	}
 	nested := filepath.Join(repo, "nested")
 	if err := os.Mkdir(nested, 0o755); err != nil {
 		t.Fatal(err)

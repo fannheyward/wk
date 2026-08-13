@@ -10,7 +10,7 @@ import (
 // recovered later. git refuses to remove a dirty worktree unless --force.
 type RmCmd struct {
 	Force bool   `short:"f" help:"Remove even if the worktree has uncommitted changes."`
-	Name  string `arg:"" help:"Worktree directory name."`
+	Name  string `arg:"" help:"Worktree name (wk directory name or Codex ID)."`
 }
 
 func (c *RmCmd) Run() error {

@@ -47,7 +47,12 @@ func EnsureRepo() error {
 // RepoName returns the source repo name (basename of the main worktree),
 // stable whether called from the source repo or any of its worktrees.
 func RepoName() (string, error) {
-	common, err := Run("rev-parse", "--path-format=absolute", "--git-common-dir")
+	return RepoNameAt("")
+}
+
+// RepoNameAt 返回指定 worktree 所属源仓库的目录名。
+func RepoNameAt(path string) (string, error) {
+	common, err := run(path, "rev-parse", "--path-format=absolute", "--git-common-dir")
 	if err != nil {
 		return "", err
 	}

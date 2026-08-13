@@ -40,10 +40,9 @@ func lsCurrentRepo(verbose bool) error {
 	}
 	var rows []row
 	for _, wt := range wts {
-		// Only wk-managed worktrees live under <root>/<repo>/; this also
-		// filters out the source repo's main worktree.
-		if filepath.Dir(wt.Path) == dir {
-			rows = append(rows, makeRow(repo, filepath.Base(wt.Path), wt.Branch, wt.Path, verbose))
+		managed, ok := managedWorktreeAt(filepath.Dir(dir), repo, wt.Path)
+		if ok {
+			rows = append(rows, makeRow(repo, managed.name, wt.Branch, wt.Path, verbose))
 		}
 	}
 	printRows(rows, false, verbose)
@@ -77,7 +76,8 @@ func lsAllRepos(verbose bool) error {
 				continue
 			}
 			path := filepath.Join(repoPath, w.Name())
-			rows = append(rows, makeRow(r.Name(), w.Name(), gitx.BranchAt(path), path, verbose))
+			managed := rootWorktreeAt(root, path)
+			rows = append(rows, makeRow(managed.repo, managed.name, gitx.BranchAt(path), path, verbose))
 		}
 	}
 	printRows(rows, true, verbose)

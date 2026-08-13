@@ -5,11 +5,20 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/alecthomas/kong"
 	"github.com/fannheyward/wk/internal/config"
 	"github.com/fannheyward/wk/internal/gitx"
 )
+
+var codexWorktreeIDRe = regexp.MustCompile(`^[A-Za-z0-9]{4}$`)
+
+type managedWorktree struct {
+	repo, name, path string
+	codex            bool
+}
 
 // CLI defines the wk command surface.
 //
@@ -21,7 +30,7 @@ type CLI struct {
 	Ls     LsCmd     `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
 	Path   PathCmd   `cmd:"" help:"Print the absolute path of a worktree"`
 	Rm     RmCmd     `cmd:"" help:"Remove a worktree directory (its branch is kept)"`
-	Doctor DoctorCmd `cmd:"" help:"Check wk-managed worktree directories"`
+	Doctor DoctorCmd `cmd:"" help:"Check managed worktree directories"`
 }
 
 // Execute parses args and runs the selected command.
@@ -31,7 +40,8 @@ func Execute() {
 		&cli,
 		kong.Name("wk"),
 		kong.Description("Manage git worktrees in a centralized directory.\n\n"+
-			"Worktrees are stored under <root>/<repo>/<name>. The root defaults to\n"+
+			"wk creates <root>/<repo>/<name> and also recognizes Codex worktrees at\n"+
+			"<root>/<4-char-id>/<repo>. The root defaults to\n"+
 			"~/worktrees and can be overridden with the WK_ROOT environment variable."),
 		kong.UsageOnError(),
 	)
@@ -58,6 +68,38 @@ func repoDir() (dir, repo string, err error) {
 	return resolve(filepath.Join(root, repo)), repo, nil
 }
 
+func managedWorktreeAt(root, repo, path string) (managedWorktree, bool) {
+	rel, err := filepath.Rel(resolve(root), resolve(path))
+	if err != nil || rel == "." || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return managedWorktree{}, false
+	}
+	parts := strings.Split(rel, string(filepath.Separator))
+	if len(parts) != 2 {
+		return managedWorktree{}, false
+	}
+	switch {
+	case codexWorktreeIDRe.MatchString(parts[0]) && parts[1] == repo:
+		return managedWorktree{repo: repo, name: parts[0], path: path, codex: true}, true
+	case parts[0] == repo:
+		return managedWorktree{repo: repo, name: parts[1], path: path}, true
+	default:
+		return managedWorktree{}, false
+	}
+}
+
+func rootWorktreeAt(root, path string) managedWorktree {
+	if repo, err := gitx.RepoNameAt(path); err == nil {
+		if wt, ok := managedWorktreeAt(root, repo, path); ok {
+			return wt
+		}
+	}
+	return managedWorktree{
+		repo: filepath.Base(filepath.Dir(path)),
+		name: filepath.Base(path),
+		path: path,
+	}
+}
+
 // resolve canonicalizes p by resolving symlinks so it matches the paths git
 // reports (git returns fully-resolved paths, e.g. /private/var on macOS).
 // It falls back gracefully when p or its parent does not exist yet.
@@ -71,21 +113,31 @@ func resolve(p string) string {
 	return p
 }
 
-// findWorktree locates a worktree of the current repo by its directory name.
+// findWorktree 根据 wk 目录名或 Codex ID 定位当前仓库的 worktree。
 func findWorktree(name string) (gitx.Worktree, error) {
-	dir, _, err := repoDir()
+	dir, repo, err := repoDir()
 	if err != nil {
 		return gitx.Worktree{}, err
 	}
-	target := filepath.Join(dir, name)
+	root := filepath.Dir(dir)
 	wts, err := gitx.Worktrees()
 	if err != nil {
 		return gitx.Worktree{}, err
 	}
+	var found *gitx.Worktree
 	for _, wt := range wts {
-		if wt.Path == target {
-			return wt, nil
+		managed, ok := managedWorktreeAt(root, repo, wt.Path)
+		if !ok || managed.name != name {
+			continue
 		}
+		if found != nil {
+			return gitx.Worktree{}, fmt.Errorf("multiple worktrees named %q under %s", name, root)
+		}
+		candidate := wt
+		found = &candidate
 	}
-	return gitx.Worktree{}, fmt.Errorf("no worktree named %q under %s", name, dir)
+	if found != nil {
+		return *found, nil
+	}
+	return gitx.Worktree{}, fmt.Errorf("no worktree named %q under %s", name, root)
 }

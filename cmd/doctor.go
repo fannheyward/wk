@@ -59,22 +59,22 @@ func doctorProblems(root string) ([]doctorProblem, error) {
 				continue
 			}
 			path := filepath.Join(repoPath, entry.Name())
-			problems = append(problems, checkDoctorEntry(repo.Name(), entry.Name(), path)...)
+			problems = append(problems, checkDoctorEntry(rootWorktreeAt(root, path))...)
 		}
 	}
 	return problems, nil
 }
 
-func checkDoctorEntry(repo, name, path string) []doctorProblem {
-	if !gitx.IsWorktreeRootAt(path) {
-		return []doctorProblem{{repo: repo, name: name, check: "not-worktree", detail: "not inside a git worktree", path: path}}
+func checkDoctorEntry(wt managedWorktree) []doctorProblem {
+	if !gitx.IsWorktreeRootAt(wt.path) {
+		return []doctorProblem{{repo: wt.repo, name: wt.name, check: "not-worktree", detail: "not inside a git worktree", path: wt.path}}
 	}
-	branch := gitx.BranchAt(path)
+	branch := gitx.BranchAt(wt.path)
 	if branch == "?" {
-		return []doctorProblem{{repo: repo, name: name, check: "branch", detail: "cannot read branch", path: path}}
+		return []doctorProblem{{repo: wt.repo, name: wt.name, check: "branch", detail: "cannot read branch", path: wt.path}}
 	}
-	if branch != name {
-		return []doctorProblem{{repo: repo, name: name, check: "name-branch", detail: fmt.Sprintf("branch is %s", branch), path: path}}
+	if !wt.codex && branch != wt.name {
+		return []doctorProblem{{repo: wt.repo, name: wt.name, check: "name-branch", detail: fmt.Sprintf("branch is %s", branch), path: wt.path}}
 	}
 	return nil
 }

@@ -15,10 +15,16 @@ Requires `git` on your `PATH`.
 
 ## Concepts
 
-Worktrees live under a global root, grouped by repo:
+Worktrees created by `wk` live under a global root, grouped by repo:
 
 ```
 <root>/<repo>/<random-name>/
+```
+
+It also recognizes the directory layout currently created by Codex:
+
+```
+<root>/<4-char-id>/<repo>/
 ```
 
 - **root** defaults to `~/worktrees`; override with the `WK_ROOT` environment
@@ -26,6 +32,10 @@ Worktrees live under a global root, grouped by repo:
 - The **directory name** is a random `adjective-noun` (e.g. `brave-otter`) and
   the new **branch** uses the same name, so the directory and branch always
   match. Commands refer to a worktree by its **directory name**.
+- Codex worktrees use the four-character ID (e.g. `329b`) as the name accepted
+  by `wk path` and `wk rm`. Their branch names are independent from that ID.
+- `wk new` continues to create only the first layout; Codex compatibility does
+  not change existing creation behavior.
 
 ## Usage
 
@@ -38,7 +48,7 @@ wk new
 wk new --name feature-one
 #   creates <root>/<repo>/feature-one on branch feature-one
 
-# List this repo's worktrees (directory name, branch, path)
+# List this repo's wk and Codex worktrees (name, branch, path)
 wk ls
 wk ls --verbose     # include dirty/upstream/ahead/behind status
 wk ls --all          # across all repos under the root
@@ -48,6 +58,7 @@ wk doctor
 
 # Print a worktree's absolute path (handy for cd)
 cd "$(wk path brave-otter)"
+cd "$(wk path 329b)"       # Codex worktree
 
 # Remove a worktree directory (its branch is kept)
 wk rm brave-otter
@@ -66,5 +77,8 @@ architecture decisions and `docs/GLOSSARY.md` for terminology.
 - `wk new --name <name>` lets you choose the directory and branch name at
   creation time. Names are single path segments and must also be valid git
   branch names.
+- `wk ls`, `wk path`, `wk rm`, and `wk doctor` recognize both directory
+  layouts. `doctor` applies the directory-name/branch-name equality rule only
+  to worktrees created in the `wk` layout.
 - `wk rm` keeps the branch so work can be recovered; it relies on git's dirty
   check and refuses to delete uncommitted changes without `--force`.
