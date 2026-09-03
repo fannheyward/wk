@@ -7,6 +7,38 @@ import (
 	"testing"
 )
 
+func TestWorktreeRoot(t *testing.T) {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatal(err)
+	}
+	relative, err := filepath.Abs("relative-wt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tests := []struct {
+		name, env, want string
+	}{
+		{"environment", "/tmp/custom-wt", "/tmp/custom-wt"},
+		{"relative", "relative-wt", relative},
+		{"default", "", filepath.Join(home, "worktrees")},
+		{"home", "~", home},
+		{"tilde", "~/wt", filepath.Join(home, "wt")},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Setenv("WK_ROOT", test.env)
+			got, err := worktreeRoot()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got != test.want {
+				t.Errorf("worktreeRoot() = %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
 func TestManagedWorktreeAt(t *testing.T) {
 	root := t.TempDir()
 	repo := "project"

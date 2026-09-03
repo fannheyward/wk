@@ -76,7 +76,7 @@ flowchart TD
 ### Phase 1 — 项目骨架 ✅
 - [x] `go mod init`，引入 kong
 - [x] 根命令 + 帮助
-- [x] `internal/` 包结构：`gitx`（git shell out 封装）、`config`（root 解析）、`naming`（随机名）
+- [x] `internal/` 包结构：`gitx`（git shell out 封装）、`naming`（随机名）；root 解析放在 `cmd/root.go`
 - [x] repo 探测：通过 git 解析源 repo 名
 - [x] root 解析：`WK_ROOT` → 默认 `~/worktrees`
 
@@ -133,14 +133,14 @@ flowchart TD
 - `wk path`：输出绝对路径 ✅
 - `wk rm`：脏拒绝、`--force` 生效、branch 保留 ✅
 - 边界：不在 repo 内报错；在 worktree 内运行能归一回源 repo ✅
-- 单元测试：config / naming / porcelain 解析全绿 ✅
+- 单元测试：root / naming / porcelain 解析全绿 ✅
 
 ## Related Files（预期）
 
 - `main.go` — 入口
 - `cmd/` — kong 子命令（new / ls / path / rm）
 - `internal/gitx/` — git shell out 封装
-- `internal/config/` — root 解析（WK_ROOT）
+- `cmd/root.go` — root 解析（WK_ROOT）
 - `internal/naming/` — 随机名生成
 - `docs/adr/` — 架构决策记录
 - `docs/GLOSSARY.md` — 术语表

@@ -7,7 +7,6 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/fannheyward/wk/internal/config"
 	"github.com/fannheyward/wk/internal/gitx"
 )
 
@@ -50,7 +49,7 @@ func lsCurrentRepo(verbose bool) error {
 }
 
 func lsAllRepos(verbose bool) error {
-	root, err := config.Root()
+	root, err := worktreeRoot()
 	if err != nil {
 		return err
 	}

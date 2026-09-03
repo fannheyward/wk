@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/alecthomas/kong"
-	"github.com/fannheyward/wk/internal/config"
 	"github.com/fannheyward/wk/internal/gitx"
 )
 
@@ -52,18 +51,37 @@ func Execute() {
 // repoDir returns the directory holding the current repo's worktrees:
 // <root>/<repoName>. It also returns the repo name.
 func repoDir() (dir, repo string, err error) {
-	if err = gitx.EnsureRepo(); err != nil {
-		return "", "", err
-	}
-	repo, err = gitx.RepoName()
+	repo, err = gitx.RepoNameAt("")
 	if err != nil {
-		return "", "", err
+		return "", "", fmt.Errorf("not inside a git repository")
 	}
-	root, err := config.Root()
+	root, err := worktreeRoot()
 	if err != nil {
 		return "", "", err
 	}
 	return resolve(filepath.Join(root, repo)), repo, nil
+}
+
+func worktreeRoot() (string, error) {
+	root := os.Getenv("WK_ROOT")
+	if root == "" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		return filepath.Join(home, "worktrees"), nil
+	}
+	if root == "~" {
+		return os.UserHomeDir()
+	}
+	if strings.HasPrefix(root, "~/") {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", err
+		}
+		root = filepath.Join(home, root[2:])
+	}
+	return filepath.Abs(root)
 }
 
 func managedWorktreeAt(root, repo, path string) (managedWorktree, bool) {

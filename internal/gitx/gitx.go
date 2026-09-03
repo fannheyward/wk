@@ -30,24 +30,9 @@ func run(dir string, args ...string) (string, error) {
 	return strings.TrimSpace(out.String()), nil
 }
 
-// Run executes git in the current directory and streams nothing; used by
-// callers that only care about success/failure and captured output.
+// Run executes git in the current directory and returns trimmed stdout.
 func Run(args ...string) (string, error) {
 	return run("", args...)
-}
-
-// EnsureRepo returns an error if the current directory is not inside a git repo.
-func EnsureRepo() error {
-	if _, err := Run("rev-parse", "--is-inside-work-tree"); err != nil {
-		return fmt.Errorf("not inside a git repository")
-	}
-	return nil
-}
-
-// RepoName returns the source repo name (basename of the main worktree),
-// stable whether called from the source repo or any of its worktrees.
-func RepoName() (string, error) {
-	return RepoNameAt("")
 }
 
 // RepoNameAt 返回指定 worktree 所属源仓库的目录名。
@@ -187,7 +172,6 @@ func parseAheadBehind(out string) (ahead, behind string) {
 type Worktree struct {
 	Path   string // absolute path
 	Branch string // branch short name, or "(detached)"
-	IsMain bool   // true for the source repo's main worktree
 }
 
 // Worktrees parses `git worktree list --porcelain` for the current repo.
@@ -207,7 +191,7 @@ func parseWorktrees(out string) []Worktree {
 	for line := range strings.SplitSeq(out, "\n") {
 		switch {
 		case strings.HasPrefix(line, "worktree "):
-			list = append(list, Worktree{Path: strings.TrimPrefix(line, "worktree "), IsMain: len(list) == 0})
+			list = append(list, Worktree{Path: strings.TrimPrefix(line, "worktree ")})
 			cur = &list[len(list)-1]
 		case cur == nil:
 			continue

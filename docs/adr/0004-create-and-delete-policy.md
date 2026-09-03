@@ -8,7 +8,7 @@ worktree 的起点和清理策略直接关系到"是否丢代码"和"起点是�
 
 ## 决策
 ### 创建 (new)
-- **必须在 git repo 内运行**（`repoDir` 首先 `EnsureRepo`，否则报错）。
+- **必须在 git repo 内运行**（`repoDir` 通过 `RepoNameAt("")` 探测，否则报错）。
 - 自动检测源 repo 的**默认分支**（origin/HEAD → 远端或本地的 main/master）。
 - 创建前尝试 `git fetch`：
   - **成功（在线）**：基于 `origin/<默认分支>` 建全新 branch，起点最新。

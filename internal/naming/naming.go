@@ -20,18 +20,13 @@ var nouns = []string{
 	"jaguar", "koala", "lynx", "marten", "newt", "osprey", "puffin", "robin",
 }
 
-// New returns a random "adjective-noun" name, e.g. "brave-otter".
-func New() string {
-	return adjectives[rand.IntN(len(adjectives))] + "-" + nouns[rand.IntN(len(nouns))]
-}
-
 // Unique returns a random name for which taken(name) reports false, retrying
 // up to 20 times before giving up and returning the last candidate. The caller
 // decides what "taken" means (e.g. an existing directory or git branch).
 func Unique(taken func(name string) bool) string {
 	var name string
 	for range 20 {
-		name = New()
+		name = adjectives[rand.IntN(len(adjectives))] + "-" + nouns[rand.IntN(len(nouns))]
 		if !taken(name) {
 			return name
 		}

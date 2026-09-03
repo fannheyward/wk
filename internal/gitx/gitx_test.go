@@ -24,12 +24,6 @@ detached
 	if len(got) != 3 {
 		t.Fatalf("want 3 worktrees, got %d", len(got))
 	}
-	if !got[0].IsMain {
-		t.Errorf("first entry should be main worktree")
-	}
-	if got[1].IsMain {
-		t.Errorf("second entry should not be main")
-	}
 	cases := []struct {
 		i            int
 		path, branch string
