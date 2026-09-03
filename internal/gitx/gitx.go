@@ -144,30 +144,6 @@ func BranchAt(path string) string {
 	return b
 }
 
-// IsWorktreeRootAt reports whether path is a git worktree root.
-func IsWorktreeRootAt(path string) bool {
-	top, err := run(path, "rev-parse", "--show-toplevel")
-	return err == nil && samePath(top, path)
-}
-
-func samePath(a, b string) bool {
-	aa, err := filepath.Abs(a)
-	if err == nil {
-		a = aa
-	}
-	bb, err := filepath.Abs(b)
-	if err == nil {
-		b = bb
-	}
-	if aa, err := filepath.EvalSymlinks(a); err == nil {
-		a = aa
-	}
-	if bb, err := filepath.EvalSymlinks(b); err == nil {
-		b = bb
-	}
-	return filepath.Clean(a) == filepath.Clean(b)
-}
-
 // Status describes lightweight worktree status for list output.
 type Status struct {
 	Dirty    string

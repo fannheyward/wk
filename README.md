@@ -53,9 +53,6 @@ wk ls
 wk ls --verbose     # include dirty/upstream/ahead/behind status
 wk ls --all          # across all repos under the root
 
-# Check the global root for invalid or inconsistent worktree directories
-wk doctor
-
 # Print a worktree's absolute path (handy for cd)
 cd "$(wk path brave-otter)"
 cd "$(wk path 329b)"       # Codex worktree
@@ -77,8 +74,6 @@ architecture decisions and `docs/GLOSSARY.md` for terminology.
 - `wk new --name <name>` lets you choose the directory and branch name at
   creation time. Names are single path segments and must also be valid git
   branch names.
-- `wk ls`, `wk path`, `wk rm`, and `wk doctor` recognize both directory
-  layouts. `doctor` applies the directory-name/branch-name equality rule only
-  to worktrees created in the `wk` layout.
+- `wk ls`, `wk path`, and `wk rm` recognize both directory layouts.
 - `wk rm` keeps the branch so work can be recovered; it relies on git's dirty
   check and refuses to delete uncommitted changes without `--force`.

@@ -71,7 +71,7 @@ func TestParseAheadBehind(t *testing.T) {
 	}
 }
 
-func TestIsWorktreeRootAtRejectsNestedDirectory(t *testing.T) {
+func TestRepoNameAt(t *testing.T) {
 	repo := filepath.Join(t.TempDir(), "repo")
 	if err := os.Mkdir(repo, 0o755); err != nil {
 		t.Fatal(err)
@@ -85,15 +85,5 @@ func TestIsWorktreeRootAtRejectsNestedDirectory(t *testing.T) {
 	}
 	if name != "repo" {
 		t.Fatalf("RepoNameAt() = %q, want repo", name)
-	}
-	nested := filepath.Join(repo, "nested")
-	if err := os.Mkdir(nested, 0o755); err != nil {
-		t.Fatal(err)
-	}
-	if !IsWorktreeRootAt(repo) {
-		t.Fatalf("repo root should be a worktree root")
-	}
-	if IsWorktreeRootAt(nested) {
-		t.Fatalf("nested directory should not be a worktree root")
 	}
 }

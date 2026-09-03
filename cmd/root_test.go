@@ -14,14 +14,13 @@ func TestManagedWorktreeAt(t *testing.T) {
 		name     string
 		path     string
 		wantName string
-		codex    bool
 		ok       bool
 	}{
-		{"wk", filepath.Join(root, repo, "brave-otter"), "brave-otter", false, true},
-		{"codex", filepath.Join(root, "a1B2", repo), "a1B2", true, true},
-		{"short codex id", filepath.Join(root, "abc", repo), "", false, false},
-		{"different repo", filepath.Join(root, "a1b2", "other"), "", false, false},
-		{"too deep", filepath.Join(root, repo, "one", "two"), "", false, false},
+		{"wk", filepath.Join(root, repo, "brave-otter"), "brave-otter", true},
+		{"codex", filepath.Join(root, "a1B2", repo), "a1B2", true},
+		{"short codex id", filepath.Join(root, "abc", repo), "", false},
+		{"different repo", filepath.Join(root, "a1b2", "other"), "", false},
+		{"too deep", filepath.Join(root, repo, "one", "two"), "", false},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -37,7 +36,7 @@ func TestManagedWorktreeAt(t *testing.T) {
 			if !ok {
 				return
 			}
-			if got.repo != repo || got.name != tc.wantName || got.path != tc.path || got.codex != tc.codex {
+			if got.repo != repo || got.name != tc.wantName || got.path != tc.path {
 				t.Fatalf("managedWorktreeAt() = %#v", got)
 			}
 		})
@@ -51,7 +50,7 @@ func TestManagedWorktreeAtKeepsFourCharacterRepo(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, ok := managedWorktreeAt(root, "rust", path)
-	if !ok || got.codex || got.repo != "rust" || got.name != "feature-one" {
+	if !ok || got.repo != "rust" || got.name != "feature-one" {
 		t.Fatalf("managedWorktreeAt() = %#v, %v", got, ok)
 	}
 }
