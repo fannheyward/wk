@@ -70,7 +70,7 @@ architecture decisions and `docs/GLOSSARY.md` for terminology.
 
 - `wk new` must run inside a git repo. It tries to `git fetch` for the freshest
   start point, but works offline too: on fetch failure it warns and falls back
-  to the local default branch.
+  to an existing remote-tracking or local default branch.
 - `wk new --name <name>` lets you choose the directory and branch name at
   creation time. Names are single path segments and must also be valid git
   branch names.

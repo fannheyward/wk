@@ -87,6 +87,26 @@ func TestManagedWorktreeAtKeepsFourCharacterRepo(t *testing.T) {
 	}
 }
 
+func TestRootWorktreeAtRequiresGitWorktree(t *testing.T) {
+	base := t.TempDir()
+	root := filepath.Join(base, "root")
+	source := initTestRepo(t, base, "project")
+	worktreePath := filepath.Join(root, "a1b2", "project")
+	addTestWorktree(t, source, worktreePath, "feature/codex")
+	managed, ok := rootWorktreeAt(root, worktreePath)
+	if !ok || managed.repo != "project" || managed.name != "a1b2" {
+		t.Fatalf("rootWorktreeAt() = %#v, %v", managed, ok)
+	}
+
+	otherPath := filepath.Join(root, "not-a-repo", "not-a-worktree")
+	if err := os.MkdirAll(otherPath, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := rootWorktreeAt(root, otherPath); ok {
+		t.Fatal("rootWorktreeAt() accepted a non-worktree directory")
+	}
+}
+
 func TestFindWorktreeFindsCodexLayout(t *testing.T) {
 	base := t.TempDir()
 	root := filepath.Join(base, "root")

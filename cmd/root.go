@@ -74,12 +74,12 @@ func worktreeRoot() (string, error) {
 	if root == "~" {
 		return os.UserHomeDir()
 	}
-	if strings.HasPrefix(root, "~/") {
+	if relative, ok := strings.CutPrefix(root, "~/"); ok {
 		home, err := os.UserHomeDir()
 		if err != nil {
 			return "", err
 		}
-		root = filepath.Join(home, root[2:])
+		root = filepath.Join(home, relative)
 	}
 	return filepath.Abs(root)
 }
@@ -103,17 +103,12 @@ func managedWorktreeAt(root, repo, path string) (managedWorktree, bool) {
 	}
 }
 
-func rootWorktreeAt(root, path string) managedWorktree {
-	if repo, err := gitx.RepoNameAt(path); err == nil {
-		if wt, ok := managedWorktreeAt(root, repo, path); ok {
-			return wt
-		}
+func rootWorktreeAt(root, path string) (managedWorktree, bool) {
+	repo, err := gitx.RepoNameAt(path)
+	if err != nil {
+		return managedWorktree{}, false
 	}
-	return managedWorktree{
-		repo: filepath.Base(filepath.Dir(path)),
-		name: filepath.Base(path),
-		path: path,
-	}
+	return managedWorktreeAt(root, repo, path)
 }
 
 // resolve canonicalizes p by resolving symlinks so it matches the paths git
@@ -149,8 +144,7 @@ func findWorktree(name string) (gitx.Worktree, error) {
 		if found != nil {
 			return gitx.Worktree{}, fmt.Errorf("multiple worktrees named %q under %s", name, root)
 		}
-		candidate := wt
-		found = &candidate
+		found = &wt
 	}
 	if found != nil {
 		return *found, nil

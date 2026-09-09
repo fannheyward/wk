@@ -15,7 +15,8 @@ import (
 //
 // It detects the repo's default branch and tries to fetch origin for the
 // freshest start point. Offline is fine: on fetch failure it warns and falls
-// back to the local default branch. Must be run inside a git repository.
+// back to an existing remote-tracking or local default branch. Must be run
+// inside a git repository.
 type NewCmd struct {
 	Name string `help:"Use this directory and branch name instead of a random name."`
 }
@@ -34,14 +35,14 @@ func (c *NewCmd) Run() error {
 	}
 
 	fmt.Fprintln(os.Stderr, "fetching origin...")
-	if err := gitx.Fetch(); err != nil {
-		// Offline is fine: fall back to the local default branch.
-		fmt.Fprintln(os.Stderr, "warning: fetch failed, using local branch:", err)
-	}
+	fetchErr := gitx.Fetch()
 
 	startPoint, err := gitx.StartPoint(branch)
 	if err != nil {
 		return err
+	}
+	if fetchErr != nil {
+		fmt.Fprintf(os.Stderr, "warning: fetch failed, using %s: %v\n", startPoint, fetchErr)
 	}
 
 	if err := os.MkdirAll(dir, 0o755); err != nil {

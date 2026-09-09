@@ -81,3 +81,30 @@ func TestRepoNameAt(t *testing.T) {
 		t.Fatalf("RepoNameAt() = %q, want repo", name)
 	}
 }
+
+func TestDefaultBranchFallsBackFromStaleOriginHead(t *testing.T) {
+	repo := filepath.Join(t.TempDir(), "repo")
+	runTestGit(t, "", "init", "-b", "main", repo)
+	runTestGit(t, repo, "config", "user.email", "wk-test@example.com")
+	runTestGit(t, repo, "config", "user.name", "wk test")
+	runTestGit(t, repo, "commit", "--allow-empty", "-m", "initial")
+	runTestGit(t, repo, "symbolic-ref", "refs/remotes/origin/HEAD", "refs/remotes/origin/deleted")
+	t.Chdir(repo)
+
+	branch, err := DefaultBranch()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if branch != "main" {
+		t.Fatalf("DefaultBranch() = %q, want main", branch)
+	}
+}
+
+func runTestGit(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	cmd := exec.CommandContext(t.Context(), "git", args...)
+	cmd.Dir = dir
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v\n%s", args, err, out)
+	}
+}

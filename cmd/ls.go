@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -55,7 +56,7 @@ func lsAllRepos(verbose bool) error {
 	}
 	repos, err := os.ReadDir(root)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil
 		}
 		return err
@@ -75,7 +76,10 @@ func lsAllRepos(verbose bool) error {
 				continue
 			}
 			path := filepath.Join(repoPath, w.Name())
-			managed := rootWorktreeAt(root, path)
+			managed, ok := rootWorktreeAt(root, path)
+			if !ok {
+				continue
+			}
 			rows = append(rows, makeRow(managed.repo, managed.name, gitx.BranchAt(path), path, verbose))
 		}
 	}

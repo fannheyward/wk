@@ -49,8 +49,10 @@ func RepoNameAt(path string) (string, error) {
 // origin/HEAD first, then falls back to main / master among either the
 // remote-tracking refs or local branches (so it works offline / without a remote).
 func DefaultBranch() (string, error) {
-	if ref, err := Run("symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"); err == nil && ref != "" {
-		return strings.TrimPrefix(ref, "refs/remotes/origin/"), nil
+	if ref, err := Run("symbolic-ref", "--quiet", "refs/remotes/origin/HEAD"); err == nil {
+		if branch, ok := strings.CutPrefix(ref, "refs/remotes/origin/"); ok && RefExists(ref) {
+			return branch, nil
+		}
 	}
 	for _, b := range []string{"main", "master"} {
 		if RefExists("refs/remotes/origin/"+b) || RefExists("refs/heads/"+b) {
@@ -189,15 +191,17 @@ func parseWorktrees(out string) []Worktree {
 	var list []Worktree
 	var cur *Worktree
 	for line := range strings.SplitSeq(out, "\n") {
-		switch {
-		case strings.HasPrefix(line, "worktree "):
-			list = append(list, Worktree{Path: strings.TrimPrefix(line, "worktree ")})
+		if path, ok := strings.CutPrefix(line, "worktree "); ok {
+			list = append(list, Worktree{Path: path})
 			cur = &list[len(list)-1]
-		case cur == nil:
 			continue
-		case strings.HasPrefix(line, "branch "):
-			cur.Branch = strings.TrimPrefix(strings.TrimPrefix(line, "branch "), "refs/heads/")
-		case line == "detached":
+		}
+		if cur == nil {
+			continue
+		}
+		if branch, ok := strings.CutPrefix(line, "branch "); ok {
+			cur.Branch = strings.TrimPrefix(branch, "refs/heads/")
+		} else if line == "detached" {
 			cur.Branch = "(detached)"
 		}
 	}
