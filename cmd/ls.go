@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"text/tabwriter"
 
@@ -13,15 +14,19 @@ import (
 
 // LsCmd lists worktrees of the current repo, or all repos with --all.
 type LsCmd struct {
+	Index   *int `arg:"" optional:"" help:"Print the current repo's path at this list index (starts at 1)."`
 	All     bool `short:"a" help:"List worktrees across all repos."`
 	Verbose bool `short:"v" help:"Include dirty and upstream status."`
 }
 
 func (c *LsCmd) Run() error {
 	if c.All {
+		if c.Index != nil {
+			return fmt.Errorf("worktree indices cannot be used with --all")
+		}
 		return lsAllRepos(c.Verbose)
 	}
-	return lsCurrentRepo(c.Verbose)
+	return lsCurrentRepo(c.Verbose, c.Index)
 }
 
 // row is one line of ls output.
@@ -29,7 +34,7 @@ type row struct {
 	repo, name, branch, dirty, upstream, ahead, behind, path string
 }
 
-func lsCurrentRepo(verbose bool) error {
+func lsCurrentRepo(verbose bool, index *int) error {
 	dir, repo, err := repoDir()
 	if err != nil {
 		return err
@@ -44,6 +49,14 @@ func lsCurrentRepo(verbose bool) error {
 		if ok {
 			rows = append(rows, makeRow(repo, managed.name, wt.Branch, wt.Path, verbose))
 		}
+	}
+	if index != nil {
+		n := *index
+		if n < 1 || n > len(rows) {
+			return fmt.Errorf("worktree index %d out of range (%d worktrees)", n, len(rows))
+		}
+		fmt.Println(rows[n-1].path)
+		return nil
 	}
 	printRows(rows, false, verbose)
 	return nil
@@ -111,9 +124,11 @@ func printRows(rows []row, withRepo, verbose bool) {
 	}
 	if withRepo {
 		header = "REPO\t" + header
+	} else {
+		header = "#\t" + header
 	}
 	fmt.Fprintln(w, header)
-	for _, r := range rows {
+	for i, r := range rows {
 		cols := []string{r.name, r.branch, r.path}
 		if verbose {
 			cols = []string{r.name, r.branch, r.dirty, r.upstream, r.ahead, r.behind, r.path}
@@ -121,6 +136,8 @@ func printRows(rows []row, withRepo, verbose bool) {
 		line := strings.Join(cols, "\t")
 		if withRepo {
 			line = r.repo + "\t" + line
+		} else {
+			line = strconv.Itoa(i+1) + "\t" + line
 		}
 		fmt.Fprintln(w, line)
 	}

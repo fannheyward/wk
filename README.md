@@ -13,17 +13,35 @@ go install github.com/fannheyward/wk@latest
 
 Requires `git` on your `PATH`.
 
+For `wk 1` / `wk 2` directory switching, add this Zsh function to `~/.zshrc`:
+
+```zsh
+wk() {
+    if [[ $# == 1 && ${1-} == <-> ]]; then
+        local wk_dir
+        wk_dir=$(command wk "$@") && builtin pushd -- "$wk_dir"
+    else
+        command wk "$@"
+    fi
+}
+```
+
+Reload the configuration with `source ~/.zshrc`.
+The function calls the `pushd` builtin to switch directories and save the
+previous directory on the stack. Use `popd` to return. `command wk` calls the
+binary. Without the function, `wk <index>` prints the selected path.
+
 ## Concepts
 
 Worktrees created by `wk` live under a global root, grouped by repo:
 
-```
+```txt
 <root>/<repo>/<random-name>/
 ```
 
 It also recognizes the directory layout currently created by Codex:
 
-```
+```txt
 <root>/<4-char-id>/<repo>/
 ```
 
@@ -48,19 +66,30 @@ wk new
 wk new --name feature-one
 #   creates <root>/<repo>/feature-one on branch feature-one
 
-# List this repo's wk and Codex worktrees (name, branch, path)
+# List this repo's wk and Codex worktrees (index, name, branch, path)
 wk ls
 wk ls --verbose     # include dirty/upstream/ahead/behind status
-wk ls --all          # across all repos under the root
+wk ls --all          # across all repos; REPO column replaces the index
 
-# Print a worktree's absolute path (handy for cd)
-cd "$(wk path brave-otter)"
-cd "$(wk path 329b)"       # Codex worktree
+# Switch to a numbered worktree (requires shell integration above)
+wk 1
+wk 2
+
+# Print a worktree's absolute path (handy for pushd)
+pushd "$(wk path brave-otter)"
+pushd "$(wk path 329b)"    # Codex worktree
 
 # Remove a worktree directory (its branch is kept)
 wk rm brave-otter
 wk rm brave-otter --force   # also remove when there are uncommitted changes
 ```
+
+Indices start at 1 and follow the current repo's displayed list order.
+`wk ls --all` shows `REPO` instead of the index column, also in verbose mode.
+`wk <index>` uses the current repo's list and cannot be combined with `--all`.
+Indices are recalculated on each call and may change when worktrees are added
+or removed.
+`wk path <name>` still resolves names, including numeric names.
 
 ## Design notes
 
