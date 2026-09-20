@@ -14,7 +14,7 @@ import (
 
 // LsCmd lists worktrees of the current repo, or all repos with --all.
 type LsCmd struct {
-	Index   *int `arg:"" optional:"" help:"Print the current repo's path at this list index (starts at 1)."`
+	Index   *int `arg:"" optional:"" help:"Print the path at this list index (0 is the source repo, worktrees start at 1)."`
 	All     bool `short:"a" help:"List worktrees across all repos."`
 	Verbose bool `short:"v" help:"Include dirty and upstream status."`
 }
@@ -44,18 +44,26 @@ func lsCurrentRepo(verbose bool, index *int) error {
 		return err
 	}
 	var rows []row
-	for _, wt := range wts {
+	for i, wt := range wts {
+		if i == 0 {
+			continue
+		}
 		managed, ok := managedWorktreeAt(filepath.Dir(dir), repo, wt.Path)
 		if ok {
 			rows = append(rows, makeRow(repo, managed.name, wt.Branch, wt.Path, verbose))
 		}
 	}
+	worktreeCount := len(rows)
+	if worktreeCount > 0 {
+		main := wts[0]
+		rows = append([]row{makeRow(repo, repo, main.Branch, main.Path, verbose)}, rows...)
+	}
 	if index != nil {
 		n := *index
-		if n < 1 || n > len(rows) {
-			return fmt.Errorf("worktree index %d out of range (%d worktrees)", n, len(rows))
+		if n < 0 || n >= len(rows) {
+			return fmt.Errorf("worktree index %d out of range (%d worktrees)", n, worktreeCount)
 		}
-		fmt.Println(rows[n-1].path)
+		fmt.Println(rows[n].path)
 		return nil
 	}
 	printRows(rows, false, verbose)
@@ -137,7 +145,7 @@ func printRows(rows []row, withRepo, verbose bool) {
 		if withRepo {
 			line = r.repo + "\t" + line
 		} else {
-			line = strconv.Itoa(i+1) + "\t" + line
+			line = strconv.Itoa(i) + "\t" + line
 		}
 		fmt.Fprintln(w, line)
 	}

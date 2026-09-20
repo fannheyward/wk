@@ -36,16 +36,12 @@ func TestIndexedNavigation(t *testing.T) {
 		t.Fatalf("build wk: %v\n%s", err, out)
 	}
 	root := filepath.Join(base, "root space")
-	source := initTestRepo(t, base, "project")
+	source := initTestRepo(t, filepath.Join(base, "project"), "project")
 	other := initTestRepo(t, base, "other")
 	codexPath := filepath.Join(root, "a1b2", "project")
 	numericPath := filepath.Join(root, "project", "1")
 	wkPath := filepath.Join(root, "project", "brave-otter")
 	otherPath := filepath.Join(root, "other", "global")
-	addTestWorktree(t, source, wkPath, "brave-otter")
-	addTestWorktree(t, source, numericPath, "numeric")
-	addTestWorktree(t, source, codexPath, "feature/codex")
-	addTestWorktree(t, other, otherPath, "global")
 	t.Setenv("WK_ROOT", root)
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
 
@@ -58,12 +54,28 @@ func TestIndexedNavigation(t *testing.T) {
 		err := command.Run()
 		return stdout.String(), stderr.String(), err
 	}
+	t.Run("source repo only", func(t *testing.T) {
+		t.Setenv("WK_ROOT", base)
+		out, stderr, err := run("ls")
+		if err != nil || out != "" || stderr != "no worktrees\n" {
+			t.Fatalf("wk ls: stdout %q, stderr %q, error %v", out, stderr, err)
+		}
+		out, stderr, err = run("0")
+		if err == nil || out != "" || !strings.Contains(stderr, "0 worktrees") {
+			t.Fatalf("wk 0: stdout %q, stderr %q, error %v", out, stderr, err)
+		}
+	})
+	addTestWorktree(t, source, wkPath, "brave-otter")
+	addTestWorktree(t, source, numericPath, "numeric")
+	addTestWorktree(t, source, codexPath, "feature/codex")
+	addTestWorktree(t, other, otherPath, "global")
 	current := []row{
+		{repo: "project", name: "project", branch: "main", path: source},
 		{repo: "project", name: "a1b2", branch: "feature/codex", path: resolve(codexPath)},
 		{repo: "project", name: "1", branch: "numeric", path: resolve(numericPath)},
 		{repo: "project", name: "brave-otter", branch: "brave-otter", path: resolve(wkPath)},
 	}
-	global := []row{current[0], {repo: "other", name: "global", branch: "global", path: otherPath}, current[1], current[2]}
+	global := []row{current[1], {repo: "other", name: "global", branch: "global", path: otherPath}, current[2], current[3]}
 	for _, tc := range []struct {
 		name    string
 		args    []string
@@ -98,7 +110,7 @@ func TestIndexedNavigation(t *testing.T) {
 				if tc.all {
 					want += r.repo + " "
 				} else {
-					want += strconv.Itoa(i+1) + " "
+					want += strconv.Itoa(i) + " "
 				}
 				want += r.name + " " + r.branch + " "
 				if tc.verbose {
@@ -112,19 +124,19 @@ func TestIndexedNavigation(t *testing.T) {
 		})
 	}
 	for i, r := range current {
-		index := strconv.Itoa(i + 1)
+		index := strconv.Itoa(i)
 		out, stderr, err := run(index)
 		if err != nil || strings.TrimSpace(out) != r.path {
 			t.Fatalf("wk %s = %q, %v, stderr %q; want %q", index, out, err, stderr, r.path)
 		}
 	}
-	for _, args := range [][]string{{"1", "--all"}, {"1", "-a"}, {"--all", "1"}, {"ls", "1", "--all"}} {
+	for _, args := range [][]string{{"0", "--all"}, {"0", "-a"}, {"1", "--all"}, {"1", "-a"}, {"--all", "1"}, {"ls", "1", "--all"}} {
 		out, stderr, err := run(args...)
 		if err == nil || out != "" || !strings.Contains(stderr, "cannot be used with --all") {
 			t.Fatalf("wk %v: stdout %q, stderr %q, error %v", args, out, stderr, err)
 		}
 	}
-	for _, index := range []string{"0", "5", "-1", "999999999999999999999", "doctor", "init"} {
+	for _, index := range []string{"4", "5", "-1", "999999999999999999999", "doctor", "init"} {
 		out, stderr, err := run(index)
 		if err == nil || strings.Contains(out, root) || stderr == "" {
 			t.Fatalf("wk %s: stdout %q, stderr %q, error %v", index, out, stderr, err)
@@ -135,11 +147,19 @@ func TestIndexedNavigation(t *testing.T) {
 	}
 	t.Run("empty list", func(t *testing.T) {
 		t.Setenv("WK_ROOT", filepath.Join(base, "missing"))
-		out, stderr, err := run("1")
-		if err == nil || out != "" || !strings.Contains(stderr, "0 worktrees") {
-			t.Fatalf("wk 1: stdout %q, stderr %q, error %v", out, stderr, err)
+		for _, index := range []string{"0", "1"} {
+			out, stderr, err := run(index)
+			if err == nil || out != "" || !strings.Contains(stderr, "0 worktrees") {
+				t.Fatalf("wk %s: stdout %q, stderr %q, error %v", index, out, stderr, err)
+			}
 		}
-		out, stderr, err = run("ls", "--all")
+		for _, args := range [][]string{{"ls"}, {"ls", "-v"}} {
+			out, stderr, err := run(args...)
+			if err != nil || out != "" || stderr != "no worktrees\n" {
+				t.Fatalf("wk %v: stdout %q, stderr %q, error %v", args, out, stderr, err)
+			}
+		}
+		out, stderr, err := run("ls", "--all")
 		if err != nil || out != "" || stderr != "" {
 			t.Fatalf("wk ls --all: stdout %q, stderr %q, error %v", out, stderr, err)
 		}
@@ -158,16 +178,25 @@ original=$PWD
 wk 1
 test "$PWD" = "$1"
 test "$dirstack[1]" = "$original"
+wk 0
+test "$PWD" = "$original"
+test "$dirstack[1]" = "$1"
+builtin popd >/dev/null
+test "$PWD" = "$1"
 builtin popd >/dev/null
 test "$PWD" = "$original"
 wk 2
 test "$PWD" = "$2"
 wk 3
 test "$PWD" = "$3"
+wk 0
+test "$PWD" = "$original"
+builtin popd >/dev/null
+test "$PWD" = "$3"
 before="$PWD"
 if wk 1 --all; then exit 1; fi
 if wk 1 -a; then exit 1; fi
-if wk 0; then exit 1; fi
+if wk 0 --all; then exit 1; fi
 if wk 999; then exit 1; fi
 test "$PWD" = "$before"
 wk 1 --help >/dev/null
@@ -186,6 +215,19 @@ test "$PWD" = "$4"
 		command.Dir = source
 		if out, err := command.CombinedOutput(); err != nil {
 			t.Fatalf("zsh navigation: %v\n%s", err, out)
+		}
+	})
+	t.Run("source repo in managed layout", func(t *testing.T) {
+		t.Setenv("WK_ROOT", base)
+		path := filepath.Join(base, "project", "local")
+		addTestWorktree(t, source, path, "local")
+		out, stderr, err := run("ls")
+		if err != nil {
+			t.Fatalf("wk ls: %v, stderr %q", err, stderr)
+		}
+		want := "# NAME BRANCH PATH 0 project main " + source + " 1 local local " + path
+		if got := strings.Join(strings.Fields(out), " "); got != want {
+			t.Fatalf("wk ls output = %q, want %q", got, want)
 		}
 	})
 }

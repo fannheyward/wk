@@ -13,7 +13,7 @@ go install github.com/fannheyward/wk@latest
 
 Requires `git` on your `PATH`.
 
-For `wk 1` / `wk 2` directory switching, add this Zsh function to `~/.zshrc`:
+For `wk 0` / `wk 1` / `wk 2` directory switching, add this Zsh function to `~/.zshrc`:
 
 ```zsh
 wk() {
@@ -74,6 +74,7 @@ wk ls --all          # across all repos; REPO column replaces the index
 # Switch to a numbered worktree (requires shell integration above)
 wk 1
 wk 2
+wk 0                # return to the source repo
 
 # Print a worktree's absolute path (handy for pushd)
 pushd "$(wk path brave-otter)"
@@ -84,7 +85,9 @@ wk rm brave-otter
 wk rm brave-otter --force   # also remove when there are uncommitted changes
 ```
 
-Indices start at 1 and follow the current repo's displayed list order.
+When this repo has listed worktrees, the source repo appears first at index 0.
+Worktree indices start at 1 and follow the displayed list order.
+With no listed worktrees, `wk ls` prints `no worktrees` and `wk 0` has no target.
 `wk ls --all` shows `REPO` instead of the index column, also in verbose mode.
 `wk <index>` uses the current repo's list and cannot be combined with `--all`.
 Indices are recalculated on each call and may change when worktrees are added
