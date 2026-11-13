@@ -21,6 +21,11 @@ worktree 的起点和清理策略直接关系到"是否丢代码"和"起点是�
 - 遵守 git 的脏检查：worktree 有未提交改动时，`git worktree remove` 默认拒绝，需 `--force`。
 - 删除后跑 `git worktree prune` 清理悬挂记录。
 
+### 清理空目录 (clear)
+- `wk clear` 删除 root 下两层内的空目录，不要求在 git repo 内运行。
+- 只含 `.DS_Store`、`.codex-worktree-name` 或空子目录的目录视为空；含其他任何内容的目录保留。
+- 逐个删除文件和目录，不用递归删除，扫描后被写入内容的目录会删除失败而不是丢数据。
+
 ## 理由
 - 自动 fetch：Copilot 体验的核心之一就是"从最新主分支开新任务"，值得为此接受联网与短暂等待。
 - 保留 branch：删除是高危操作，保守策略把"丢数据"的门槛抬高，符合安全优先原则。

@@ -83,6 +83,9 @@ pushd "$(wk path 329b)"    # Codex worktree
 # Remove a worktree directory (its branch is kept)
 wk rm brave-otter
 wk rm brave-otter --force   # also remove when there are uncommitted changes
+
+# Remove empty directories left under the root after worktrees are removed
+wk clear
 ```
 
 When this repo has listed worktrees, the source repo appears first at index 0.
@@ -109,3 +112,6 @@ architecture decisions and `docs/GLOSSARY.md` for terminology.
 - `wk ls`, `wk path`, and `wk rm` recognize both directory layouts.
 - `wk rm` keeps the branch so work can be recovered; it relies on git's dirty
   check and refuses to delete uncommitted changes without `--force`.
+- `wk clear` scans the root two levels deep and removes only empty directories.
+  A directory that holds nothing but `.DS_Store`, Codex's
+  `.codex-worktree-name`, or empty subdirectories counts as empty.

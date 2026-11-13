@@ -24,10 +24,11 @@ type managedWorktree struct {
 // root directory and creates them from the latest default branch with readable
 // random names. The directory name and initial branch name match.
 type CLI struct {
-	New  NewCmd  `cmd:"" help:"Create a worktree from the latest default branch"`
-	Ls   LsCmd   `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
-	Path PathCmd `cmd:"" help:"Print the absolute path of a worktree"`
-	Rm   RmCmd   `cmd:"" help:"Remove a worktree directory (its branch is kept)"`
+	New   NewCmd   `cmd:"" help:"Create a worktree from the latest default branch"`
+	Ls    LsCmd    `cmd:"" default:"withargs" help:"List worktrees of the current repo (or all repos with --all)"`
+	Path  PathCmd  `cmd:"" help:"Print the absolute path of a worktree"`
+	Rm    RmCmd    `cmd:"" help:"Remove a worktree directory (its branch is kept)"`
+	Clear ClearCmd `cmd:"" help:"Remove empty directories under the root"`
 }
 
 // Execute parses args and runs the selected command.
